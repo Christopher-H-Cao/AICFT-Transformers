@@ -1,0 +1,57 @@
+# PyTorch test of training 6loop coef_from_word on HTCondor
+# Submit file 
+
+# Must set the universe to Docker
+docker_image = garrettmerz/chromoboot:0.0.10
+universe = docker
+docker_network_type = host
+
+# set the log, error and output files 
+log = log/train_6loop_coef_from_word_$(Cluster)_$(Process).log.txt
+error = err/train_6loop_coef_from_word_$(Cluster)_$(Process).err.txt
+output = out/train_6loop_coef_from_word_$(Cluster)_$(Process).out.txt
+
+# set the executable to run
+executable = scripts/coef_from_word/run_training_6loop.sh
+#PID, n_layers enc/dec
+arguments = coef_from_word_$(Cluster)_$(Process) $(layers) $(seed) $(Cluster)$(Process) 
+
+# take our python script to the compute node
+# the script and data are shared by multiple examples and located in a
+# different directory
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+# IMPORTANT! Require execute servers that can access /staging
+Requirements = (Target.HasCHTCStaging == true)
+
+# We require a machine with a compatible version of the CUDA driver
+require_gpus = (Capability >= 3.7) && (DriverVersion >= 10.1)
+
+# We must request 1 CPU in addition to 1 GPU
+request_cpus = 1
+request_gpus = 1
+
+# select some memory and disk space
+request_memory = 50GB
+request_disk = 50GB
+
+#checkpoint
+checkpoint_exit_code        = 85
+transfer_checkpoint_files   = checkpoint_$(Cluster)$(Process).tar.gz
++is_resumable = true
+
+# Opt in to using CHTC GPU Lab resources
++WantGPULab = true
+# Specify short job type to run more GPUs in parallel
+# Can also request "medium" or "short"
++GPUJobLength = "short"
+
+# Tell HTCondor to run 3 instances of our job:
+#layers = 1
+#queue 1 seed in 0,10,42
+layers = 2
+queue 1 seed in 0,10,42
+#layers = 4
+#queue 1 seed in 0,10,42

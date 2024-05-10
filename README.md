@@ -42,6 +42,7 @@ without zeroes
      263880 loop5.prefix
     4916466 loop6.prefix
 
+
 *split_data.py:*
 
  `python split_data.py  --data_path /checkpoint/fcharton/dumped/chromoboost/loop4.prefix --valid_set_size 10000 --no_test True`
@@ -66,15 +67,16 @@ To generate the date for the "parents" study, call the generate_recur_data scrip
 
 Training Example:
 python train.py --reload_data boots,../ChromoBoot_data/processed_data/loop4.prefix.train,../ChromoBoot_data/processed_data/loop4.prefix.valid,../ChromoBoot_data/processed_data/loop4.prefix.valid
---max_epoch 50 --n_enc_layers 2 --n_dec_layers 2 --num_workers 1 --eval_relations True --relations_path ../rels/
+--max_epoch 50 --n_enc_layers 2 --n_dec_layers 2 --num_workers 1
 
 Eval Example:
 python train.py --eval_only --eval_data ../ChromoBoot_data/processed_data/loop6_recur.prefix.valid --eval_from_exp ./checkpoint/garrett/dumped/debug/m0cwik7xz5 --eval_verbose 1 
+
+
+
 
 # Docker
 All package dependencies are listed in requirements.txt. The relatively-small dockerfile provided can be used to run the repo on a setup such as UW's CHTC (you will need to copy the code and data in for now).In general, though, this is not needed for local runs!
 
 # Tensorboard
-Metrics are logged in tensorboard format in the "runs" directory, or in the "xp" directory if you would like to use the ReadXP notebook. To use the tensorboard viewer, simply call "tensorboard --logdir runs_train".
-NOTE: to view the input parameters table in the HPARAMS tab, you also need to specify at least one metric in the validation_metrics args! I recommend just using the full default set.
-20 examples of perfect match, sign match but coeff different, etc. samples are logged on the tensorboard. You can see these at train or eval time by calling with the "eval_verbose" flag set to 1. 
+Metrics are logged on wandb- create a weights and biases account to follow trainings as they happen. If no wandb account is found, logging will happen on tensorboard instead.

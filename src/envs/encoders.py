@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
+from fractions import Fraction
+from decimal import Decimal
 from sympy import factorint,prime
 
 class Encoder(ABC):
@@ -15,6 +17,60 @@ class Encoder(ABC):
     @abstractmethod
     def decode(self, val):
         pass
+
+class Rational(Encoder):
+    """
+    Rational numbers, in base params.base
+    """
+    def __init__(self, params, base):
+        super().__init__()
+        self.base = base
+        self.sign_last = params.sign_last
+        self.symbols = [str(i) for i in range(self.base)] + ["/"]
+
+    def encode(self, value):
+        #encode a Fraction object as a string of tokens.
+        if value != 0:
+            prefix = []
+            w = abs(value)
+            while w > 0:
+                prefix.append(str(w % self.base))
+                w = w // self.base
+            prefix = prefix[::-1]
+        else:
+            prefix = ['0']
+        if self.sign_last:
+            prefix = prefix + (['+'] if value >= 0 else ['-'])
+        else:
+            prefix = (['+'] if value >= 0 else ['-']) + prefix
+        return prefix
+
+    def decode(self, lst):
+        # decode a string of tokens as a Fraction object.
+        if len(lst) < 1:
+            return None
+        if self.sign_last:
+            if lst[-1] != '+' and lst[-1] != '-':
+                return None
+            if len(lst) == 1:
+                return 0
+            res = 0
+            for x in lst[:-1]:
+                if not (x.isdigit()):
+                    return None
+                res = res * self.base + int(x)
+            return -res if lst[-1] == '-' else res
+
+        if len(lst) < 1 or (lst[0] != '+' and lst[0] != '-'):
+            return None
+        if len(lst) == 1:
+            return 0
+        res = 0
+        for x in lst[1:]:
+            if not (x.isdigit()):
+                return None
+            res = res * self.base + int(x)
+        return -res if lst[0] == '-' else res
 
 class Binary(Encoder):
     """
