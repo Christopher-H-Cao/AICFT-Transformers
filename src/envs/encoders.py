@@ -22,21 +22,28 @@ class Rational(Encoder):
     """
     Rational numbers, in base params.base
     """
-    def __init__(self, params, base):
+    def __init__(self, base):
         super().__init__()
         self.base = base
-        self.sign_last = params.sign_last
+        self.sign_last = False
+        #self.sign_last = params.sign_last
         self.symbols = [str(i) for i in range(self.base)] + ["/"]
 
     def encode(self, value):
-        #encode a Fraction object as a string of tokens.
+        #encode a Fraction object, int, or float as a string of tokens.
         if value != 0:
             prefix = []
-            w = abs(value)
-            while w > 0:
-                prefix.append(str(w % self.base))
-                w = w // self.base
-            prefix = prefix[::-1]
+            w = Fraction(value).limit_denominator()
+            w = abs(w)
+            numer = w.numerator
+            denom = w.denominator
+            while numer > 0:
+                prefix.append(str(numer % self.base))
+                numer = numer // self.base
+            prefix.append("/")
+            while denom > 0:
+                prefix.append(str(denom % self.base))
+                denom = denom // self.base
         else:
             prefix = ['0']
         if self.sign_last:
@@ -54,22 +61,40 @@ class Rational(Encoder):
                 return None
             if len(lst) == 1:
                 return 0
-            res = 0
-            for x in lst[:-1]:
+            numres = 0
+            denomres = 0
+            temp = lst[:-1].index("/")
+            numer = lst[:-1][:temp]
+            denom = lst[:-1][temp+1:]
+            for x in numer:
                 if not (x.isdigit()):
                     return None
-                res = res * self.base + int(x)
+                numres = numres * self.base + int(x)
+            for x in denom:
+                if not (x.isdigit()):
+                    return None
+                denomres = denomres * self.base + int(x)
+            res=Fraction(numres,denomres)
             return -res if lst[-1] == '-' else res
 
         if len(lst) < 1 or (lst[0] != '+' and lst[0] != '-'):
             return None
         if len(lst) == 1:
             return 0
-        res = 0
-        for x in lst[1:]:
+        numres = 0
+        denomres = 0
+        temp = lst[1:].index("/")
+        numer = lst[1:][:temp]
+        denom = lst[1:][temp+1:]
+        for x in numer:
             if not (x.isdigit()):
                 return None
-            res = res * self.base + int(x)
+            numres = numres * self.base + int(x)
+        for x in denom:
+            if not (x.isdigit()):
+                return None
+            denomres = denomres * self.base + int(x)
+        res = Fraction(numres, denomres)
         return -res if lst[0] == '-' else res
 
 class Binary(Encoder):

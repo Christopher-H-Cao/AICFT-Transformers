@@ -50,8 +50,8 @@ class CFTEnvironment(object):
         self.append_registers = params.append_registers
 
         self.output_encoder = encoders.Rational(params,base)
-        if params.numeric_import_input:
-            self.input_encoder = encoders.RationalVector(params, base)
+        #if params.numeric_import_input:
+        #    self.input_encoder = encoders.RationalVector(params, base)
 
         self.word_encoder = encoders.WordBase(params)
 
@@ -142,6 +142,7 @@ class CFTEnvironment(object):
         return infix
 
     def decode_class(self, i, do_2adic=False):
+        #map each possible output to an integer bucket, to log acc in each bucket
         if self.operation == "coeffs":
             if do_2adic:
                 if i == 0: return str(0)
