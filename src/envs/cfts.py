@@ -6,17 +6,18 @@
 #
 
 from logging import getLogger
-
+from fractions import Fraction
 import math
 import numpy as np
 import src.envs.encoders as encoders
 import src.envs.generators as generators
 import json
-
+from sympy import factorint,prime
 from torch.utils.data import DataLoader
 from src.dataset import EnvDataset
 
 from ..utils import bool_flag, padic_order_equals, biggest_power_of_p
+from ..utils import n_to_s, s_to_n, get_factordict
 
 SPECIAL_WORDS = ["<eos>", "<pad>", "<sep>", "(", ")", "<MASK>"]
 SPECIAL_WORDS = SPECIAL_WORDS + [f"<SPECIAL_{i}>" for i in range(10)]
@@ -48,7 +49,6 @@ class CFTEnvironment(object):
         self.modulus = params.modulus
         self.registers = params.registers
         self.append_registers = params.append_registers
-
         self.output_encoder = encoders.Rational(params,base)
         #if params.numeric_import_input:
         #    self.input_encoder = encoders.RationalVector(params, base)
@@ -141,45 +141,40 @@ class CFTEnvironment(object):
         infix = self.input_to_infix(prefix) if input else self.output_to_infix(prefix)
         return infix
 
-    def decode_class(self, i, do_2adic=False):
-        #map each possible output to an integer bucket, to log acc in each bucket
+    def decode_class(self, i):
+        #Bijection from rationals to integers using unique prime factorization
+        #decode integers into rationals
         if self.operation == "coeffs":
-            if do_2adic:
-                if i == 0: return str(0)
-                else:
-                    val = (i - 500)
-                    sign = np.sign(val)
-                    mag = pow(2, abs(val))
-                    return str(sign*mag)
-            else:
-                if i == 1000: return "others"
-                if i == 0: return str(0)
-                else:
-                    val = (i - 500)
-                    sign = np.sign(val)
-                    mag = pow(2, abs(val))
-                    return str(sign*mag)
-        #if self.operation =="mask":
-        return str(i)
+            facs = get_factordict(i)
+            mydict={}
+            my_frac = 1
+            for k,v in facs:
+                mydict[k]=n_to_s(v)
+                my_frac *= pow(k, n_to_s(v))
+            thisfrac= Fraction(my_frac).limit_denominator(10000)
+            return f'{thisfrac.numerator}'+'/'+f'{thisfrac.denominator}'
+        else:
+            return str(i)
 
-    def code_class(self, xi, yi, do_2adic=False):
-        #index cannot be negative, so shift up
+    def code_class(self, xi, yi):
+        #Bijection from rationals to integers using unique prime factorization
+        #map each possible output to an integer bucket, to log acc in each bucket
         if self.operation =="coeffs":
             nre = self.output_encoder.decode(yi)
-            if do_2adic:
-                #track 2adic accuracy
-                if nre == 0: return 0
-                else:
-                    return (np.sign(nre) * math.log(biggest_power_of_p(nre,2),2) + 500)
-            else:
-                #track acc on all pure powers of 2
-                if nre == 0: return 0
-                else:
-                    if math.log(np.abs(nre),2).is_integer():
-                        return (np.sign(nre) * math.log(biggest_power_of_p(nre,2),2) + 500)
-                    else: return 1000
-        #elif self.operation =="mask":
-        return int(yi[0])
+            a = nre.numerator
+            b = nre.denominator
+            a_facs = get_factordict(a)
+            b_facs = get_factordict(b)
+            b_facs_neg = {k:(-1)*v for k,v in b_facs.items()}
+            allfacs={**a_facs, **b_facs_neg}
+            newfacs={}
+            my_int=1
+            for k,v in allfacs.items():
+                newfacs[k] = s_to_n(v)
+                my_int *= pow(k,s_to_n(v))
+            return my_int
+        else:
+            return int(yi[0])
 
     def check_prediction(self, src, tgt, hyp):
         if len(hyp) == 0 or len(tgt) == 0:

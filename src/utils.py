@@ -43,6 +43,27 @@ except:
 
 CUDA = True
 
+#helper functions. Map n= 0,1,2,3... onto s= 0,-1,1,-2...
+def n_to_s(n):
+    return pow(-1,n)*math.floor((n+1)/2)
+def s_to_n(s):
+    if s > 0:
+        # n is even
+        n=2*abs(s)-1
+    else:
+        #n is odd:
+        n = 2 * abs(s)
+    return n
+def get_factordict(a):
+    if abs(a) == 1:
+        a_factors = {1: 1}
+    else:
+        a_factors = factorint(abs(a))
+    remainder = a
+    for fac in a_factors.keys():
+        if fac < prime(1000) and fac > 0:
+            remainder = int(remainder / pow(fac, a_factors[fac]))
+    return a_factors
 
 def is_power_of_p(n,p):
     if p == 0: raise ValueError

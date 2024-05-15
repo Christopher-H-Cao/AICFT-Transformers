@@ -33,7 +33,7 @@ class Rational(Encoder):
         #encode a Fraction object, int, or float as a string of tokens.
         if value != 0:
             prefix = []
-            w = Fraction(value).limit_denominator()
+            w = Fraction(value).limit_denominator(10000)
             w = abs(w)
             numer = w.numerator
             denom = w.denominator
