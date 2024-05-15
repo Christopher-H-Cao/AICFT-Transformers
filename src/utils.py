@@ -22,6 +22,7 @@ import errno
 import signal
 from PIL import Image
 from io import BytesIO
+from sympy import factorint,prime
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -45,7 +46,7 @@ CUDA = True
 
 #helper functions. Map n= 0,1,2,3... onto s= 0,-1,1,-2...
 def n_to_s(n):
-    return pow(-1,n)*math.floor((n+1)/2)
+    return pow(-1,n+1)*math.floor((n+1)/2)
 def s_to_n(s):
     if s > 0:
         # n is even
@@ -54,11 +55,23 @@ def s_to_n(s):
         #n is odd:
         n = 2 * abs(s)
     return n
+#bucket indices can only be >0 so map ints to nats
+def int_to_nat(i):
+    if i >= 0:
+        return int(2*i-1)
+    else:
+        return int(-2*i)
+def nat_to_int(n):
+    if n % 2==0:
+        return int(-1*(n/2))
+    else:
+        return int((n+1)/2)
+
 def get_factordict(a):
-    if abs(a) == 1:
+    if a == 1:
         a_factors = {1: 1}
     else:
-        a_factors = factorint(abs(a))
+        a_factors = factorint(a)
     remainder = a
     for fac in a_factors.keys():
         if fac < prime(1000) and fac > 0:

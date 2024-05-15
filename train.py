@@ -160,15 +160,15 @@ def get_parser():
                         help="Maximum epoch number")
     parser.add_argument("--stopping_criterion", type=str, default="",
                         help="Stopping criterion, and number of non-increase before stopping the experiment")
-    parser.add_argument("--validation_metrics", type=str, default="_valid_boots_xe_loss,valid_boots_acc,"
-                                                                  "valid_boots_perfect,valid_boots_correct,"
-                                                                  "valid_boots_acc_mag,valid_boots_acc_sign,valid_boots_acc_2adic",
+    parser.add_argument("--validation_metrics", type=str, default="_valid_cfts_xe_loss,valid_cfts_acc,"
+                                                                  "valid_cfts_perfect,valid_cfts_correct,"
+                                                                  "valid_cfts_acc_mag,valid_cfts_acc_sign,valid_cfts_acc_2adic",
                         help="Validation metrics to write to tensorboard")
-    parser.add_argument("--validation_metrics_mask", type=str, default="_valid_boots_xe_loss,valid_boots_acc,"
-                                                                  "valid_boots_perfect,valid_boots_correct,"
-                                                                  "valid_boots_acc_matched_phrases,valid_boots_acc_good_phrases",
+    parser.add_argument("--validation_metrics_mask", type=str, default="_valid_cfts_xe_loss,valid_cfts_acc,"
+                                                                  "valid_cfts_perfect,valid_cfts_correct,"
+                                                                  "valid_cfts_acc_matched_phrases,valid_cfts_acc_good_phrases",
                         help="Validation metrics to write to tensorboard")
-    parser.add_argument("--checkpoint_best_metrics", type=str, default="_valid_boots_xe_loss",
+    parser.add_argument("--checkpoint_best_metrics", type=str, default="_valid_cfts_xe_loss",
                         help="save model checkpoints for best values of specified metrics."
                              "Must be in --validation_metrics also")
     parser.add_argument("--accumulate_gradients", type=int, default=1,
@@ -188,11 +188,11 @@ def get_parser():
                         help="Load training set by batches (of size reload_size).")
 
     # environment parameters
-    parser.add_argument("--env_name", type=str, default="boots",
+    parser.add_argument("--env_name", type=str, default="cfts",
                         help="Environment name")
     ENVS[parser.parse_known_args()[0].env_name].register_args(parser)
     # tasks
-    parser.add_argument("--tasks", type=str, default="boots",
+    parser.add_argument("--tasks", type=str, default="cfts",
                         help="Tasks")
 
     parser.add_argument("--full_sentence", type=bool_flag, default=False,
@@ -217,7 +217,7 @@ def get_parser():
                         help="Reload a checkpoint")
 
     # evaluation
-    parser.add_argument("--best_metric_to_load", type=str, default="valid_boots_xe_loss",
+    parser.add_argument("--best_metric_to_load", type=str, default="valid_cfts_xe_loss",
                         help="Which metric's best checkpoint to load")
     parser.add_argument("--eval_only", type=bool_flag, default=False,
                         help="Only run evaluations")

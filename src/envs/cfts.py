@@ -12,12 +12,11 @@ import numpy as np
 import src.envs.encoders as encoders
 import src.envs.generators as generators
 import json
-from sympy import factorint,prime
 from torch.utils.data import DataLoader
 from src.dataset import EnvDataset
 
 from ..utils import bool_flag, padic_order_equals, biggest_power_of_p
-from ..utils import n_to_s, s_to_n, get_factordict
+from ..utils import n_to_s, s_to_n, get_factordict, int_to_nat, nat_to_int
 
 SPECIAL_WORDS = ["<eos>", "<pad>", "<sep>", "(", ")", "<MASK>"]
 SPECIAL_WORDS = SPECIAL_WORDS + [f"<SPECIAL_{i}>" for i in range(10)]
@@ -49,7 +48,7 @@ class CFTEnvironment(object):
         self.modulus = params.modulus
         self.registers = params.registers
         self.append_registers = params.append_registers
-        self.output_encoder = encoders.Rational(params,base)
+        self.output_encoder = encoders.Rational(base)
         #if params.numeric_import_input:
         #    self.input_encoder = encoders.RationalVector(params, base)
 
@@ -63,7 +62,10 @@ class CFTEnvironment(object):
         self.signs = ['+', '-']
         self.letters = ['a', 'b', 'c', 'd', 'e', 'f','g','h']
         self.common_symbols = self.signs + self.letters
-
+        if self.registers > 0:
+            self.regwords = [f"R{i}" for i in range(params.registers)]
+        else:
+            self.regwords = []
         #add the number tokens
         self.words = SPECIAL_WORDS + self.common_symbols + sorted(list(
                 set(self.regwords + self.output_encoder.symbols)
@@ -144,17 +146,18 @@ class CFTEnvironment(object):
     def decode_class(self, i):
         #Bijection from rationals to integers using unique prime factorization
         #decode integers into rationals
+        cls = nat_to_int(i)
         if self.operation == "coeffs":
-            facs = get_factordict(i)
+            facs = get_factordict(cls)
             mydict={}
             my_frac = 1
-            for k,v in facs:
+            for k,v in facs.items():
                 mydict[k]=n_to_s(v)
                 my_frac *= pow(k, n_to_s(v))
             thisfrac= Fraction(my_frac).limit_denominator(10000)
             return f'{thisfrac.numerator}'+'/'+f'{thisfrac.denominator}'
         else:
-            return str(i)
+            return str(cls)
 
     def code_class(self, xi, yi):
         #Bijection from rationals to integers using unique prime factorization
@@ -172,9 +175,9 @@ class CFTEnvironment(object):
             for k,v in allfacs.items():
                 newfacs[k] = s_to_n(v)
                 my_int *= pow(k,s_to_n(v))
-            return my_int
+            return int_to_nat(my_int)
         else:
-            return int(yi[0])
+            return int_to_nat(int(yi[0]))
 
     def check_prediction(self, src, tgt, hyp):
         if len(hyp) == 0 or len(tgt) == 0:
