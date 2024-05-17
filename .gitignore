@@ -12,6 +12,7 @@ __pycache__/
 build/
 *.pdf
 *.png
+*.csv
 checkpoint*/
 runs_train/
 runs_eval/

@@ -66,8 +66,7 @@ To generate the date for the "parents" study, call the generate_recur_data scrip
 ## Running the model
 
 Training Example:
-python train.py --reload_data boots,../ChromoBoot_data/processed_data/loop4.prefix.train,../ChromoBoot_data/processed_data/loop4.prefix.valid,../ChromoBoot_data/processed_data/loop4.prefix.valid
---max_epoch 50 --n_enc_layers 2 --n_dec_layers 2 --num_workers 1
+python train.py --reload_data cfts,./sample_data/su2_cfts.data.train,./sample_data/su2_cfts.data.valid,./sample_data/su2_cfts.data.valid --max_epoch 20 --n_enc_layers 1 --n_dec_layers 1 --num_workers 1 --eval_verbose 1 --batch_size 512 --batch_size_eval 10 --enc_emb_dim 512 --dec_emb_dim 512 --amp 1 --fp16 True
 
 Eval Example:
 python train.py --eval_only --eval_data ../ChromoBoot_data/processed_data/loop6_recur.prefix.valid --eval_from_exp ./checkpoint/garrett/dumped/debug/m0cwik7xz5 --eval_verbose 1 

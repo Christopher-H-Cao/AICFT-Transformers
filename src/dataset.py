@@ -161,6 +161,7 @@ class EnvDataset(Dataset):
         if not self.operation=='mask':
             #"old" training
             x, y = zip(*elements)
+            print(elements)
             nb_eqs = [self.env.code_class(xi, yi) for xi, yi in zip(x, y)]
             if self.env.registers:
                 reg_list = [f"R{i}" for i in range(self.env.registers)]
@@ -292,6 +293,7 @@ class EnvDataset(Dataset):
             val = self.env.output_encoder.decode(y)
             y = self.env.output_encoder.encode(val)
         else:
+            """
             sign = 1 if y[0] == '+' else -1
             val = int(y[1])
             for i in range(2,len(y)):
@@ -300,6 +302,8 @@ class EnvDataset(Dataset):
                 val = val * sign
             else:
                 val = val % self.env.modulus
+            """
+            val = float(y[0])
             y = self.env.output_encoder.encode(val)
         x=self.env.word_encoder.encode(x)
         #print(x)

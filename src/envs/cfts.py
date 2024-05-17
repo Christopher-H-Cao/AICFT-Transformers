@@ -32,14 +32,14 @@ class InvalidPrefixExpression(Exception):
 
 class CFTEnvironment(object):
 
-    TRAINING_TASKS = {"cft"}
+    TRAINING_TASKS = {"cfts"}
     def __init__(self, params):
         params=self.bonus_args(params)
         self.max_len = params.max_len
         self.operation = params.operation
 
         #define some extra accuracy metrics to track here:
-        #self.hyp_eval_metrics =["mag","sign","2adic"]
+        self.hyp_eval_metrics =["mag","sign","denom", "numer"]
         self.hyp_eval_metrics =[]
 
         assert params.reload_data != ""
@@ -52,7 +52,7 @@ class CFTEnvironment(object):
         #if params.numeric_import_input:
         #    self.input_encoder = encoders.RationalVector(params, base)
 
-        self.word_encoder = encoders.WordBase(params)
+        self.word_encoder = encoders.Rational(base)
 
         self.float_tolerance = 0.1 # params.float_tolerance
         self.additional_tolerance = []
@@ -194,8 +194,9 @@ class CFTEnvironment(object):
         a = 0 if abs(v) == abs(w) else -1.0
         b = 0 if np.sign(v) == np.sign(w) else -1.0
         c = 0 if v == w else -1.0
-        p = 0 if (padic_order_equals(v,w,2)) else -1.0
-        return c, a, b, p
+        d = 0 if v.denominator == w.denominator else -1.0
+        n = 0 if v.numerator == w.numerator else -1.0
+        return c, a, b, d, n
 
     def check_hypothesis(self,eq):
         """
@@ -212,18 +213,20 @@ class CFTEnvironment(object):
         eq["hyp_evals"] = {}
 
         try:
-            m, s1, s2, p = self.check_prediction(src, tgt, hyp)
+            m, s1, s2, d, n = self.check_prediction(src, tgt, hyp)
         except ValueError:
             m = -1.0
             s1 = -1.0
             s2 = -1.0
-            p = -1.0
+            d = -1.0
+            n = -1.0
         #valid hyp = all correct. Universal metric
         eq["is_valid"] = m
         #task specific hyp metrics
         eq["hyp_evals"]["mag"] = s1
         eq["hyp_evals"]["sign"] = s2
-        eq["hyp_evals"]["2adic"] = p
+        eq["hyp_evals"]["denom"] = d
+        eq["hyp_evals"]["numer"] = n
         return eq
 
     def list_to_keyvals(self,mylist):
