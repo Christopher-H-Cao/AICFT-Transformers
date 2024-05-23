@@ -11,6 +11,7 @@ import io
 import sys
 import json
 import numpy as np
+import itertools
 
 from .utils import encode_num
 import torch
@@ -161,7 +162,8 @@ class EnvDataset(Dataset):
         if not self.operation=='mask':
             #"old" training
             x, y = zip(*elements)
-            nb_eqs = [self.env.code_class(xi, yi) for xi, yi in zip(x, y)]
+            #nb_eqs = [self.env.code_class(xi, yi) for xi, yi in zip(x, y)]
+            nb_eqs = [0 for xi in x]
             if self.env.registers:
                 reg_list = [f"R{i}" for i in range(self.env.registers)]
                 if self.env.append_registers:
@@ -292,6 +294,7 @@ class EnvDataset(Dataset):
             val = self.env.output_encoder.decode(y)
             y = self.env.output_encoder.encode(val)
         else:
+            """
             sign = 1 if y[0] == '+' else -1
             val = int(y[1])
             for i in range(2,len(y)):
@@ -300,9 +303,13 @@ class EnvDataset(Dataset):
                 val = val * sign
             else:
                 val = val % self.env.modulus
+            """
+            val = float(y[0])
             y = self.env.output_encoder.encode(val)
-        x=self.env.word_encoder.encode(x)
-        #print(x)
+            x_new = []
+            for num in x:
+                x_new += self.env.word_encoder.encode(float(num))
+            x = x_new
         return x, y
 
     def read_sentence(self, index):

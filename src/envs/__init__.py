@@ -7,10 +7,11 @@
 
 from logging import getLogger
 
-from .boots import BootsEnvironment
+from .cfts import CFTEnvironment
+
 
 ENVS = {
-    'boots': BootsEnvironment,
+    'cfts': CFTEnvironment,
 }
 
 logger = getLogger()

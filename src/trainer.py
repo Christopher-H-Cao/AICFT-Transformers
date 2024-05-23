@@ -182,7 +182,7 @@ class Trainer(object):
 
         if params.log_to_wandb:
             wandb.login()
-            wandb.init(group="AIAA", job_type=loggername, config=params,resume=params.resume_wandb)
+            wandb.init(group="AI_CFT", project="AI_CFTs", job_type=loggername, config=params,resume=params.resume_wandb)
         else:
             self.writer = SummaryWriter(loggername)
     def set_parameters(self):
