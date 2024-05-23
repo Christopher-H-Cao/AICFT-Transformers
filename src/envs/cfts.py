@@ -40,7 +40,6 @@ class CFTEnvironment(object):
 
         #define some extra accuracy metrics to track here:
         self.hyp_eval_metrics =["mag","sign","denom", "numer"]
-        self.hyp_eval_metrics =[]
 
         assert params.reload_data != ""
         self.eval_lookup_dict=params.eval_lookup_dict

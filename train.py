@@ -162,7 +162,8 @@ def get_parser():
                         help="Stopping criterion, and number of non-increase before stopping the experiment")
     parser.add_argument("--validation_metrics", type=str, default="_valid_cfts_xe_loss,valid_cfts_acc,"
                                                                   "valid_cfts_perfect,valid_cfts_correct,"
-                                                                  "valid_cfts_acc_mag,valid_cfts_acc_sign,valid_cfts_acc_2adic",
+                                                                  "valid_cfts_acc_mag,valid_cfts_acc_sign,"
+                                                                  "valid_cfts_acc_denom,valid_cfts_acc_numer",
                         help="Validation metrics to write to tensorboard")
     parser.add_argument("--validation_metrics_mask", type=str, default="_valid_cfts_xe_loss,valid_cfts_acc,"
                                                                   "valid_cfts_perfect,valid_cfts_correct,"

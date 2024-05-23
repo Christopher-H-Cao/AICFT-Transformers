@@ -37,15 +37,19 @@ class Rational(Encoder):
             w = abs(w)
             numer = w.numerator
             denom = w.denominator
+            numpref=[]
             while numer > 0:
-                prefix.append(str(numer % self.base))
+                numpref.append(str(numer % self.base))
                 numer = numer // self.base
+            prefix += numpref[::-1]
             prefix.append("/")
+            denpref=[]
             while denom > 0:
-                prefix.append(str(denom % self.base))
+                denpref.append(str(denom % self.base))
                 denom = denom // self.base
+            prefix += denpref[::-1]
         else:
-            prefix = ['0']
+            prefix = ['0', '/', '1']
         if self.sign_last:
             prefix = prefix + (['+'] if value >= 0 else ['-'])
         else:
@@ -54,6 +58,8 @@ class Rational(Encoder):
 
     def decode(self, lst):
         # decode a string of tokens as a Fraction object.
+        if "/" not in lst:
+            return None
         if len(lst) < 1:
             return None
         if self.sign_last:
