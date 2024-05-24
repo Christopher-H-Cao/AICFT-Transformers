@@ -317,7 +317,6 @@ class Evaluator(object):
                 xe_loss += loss.item() * len(y)
                 n_valid.index_add_(-1, nb_ops, valid)
                 n_total.index_add_(-1, nb_ops, torch.ones_like(nb_ops))
-
                 for i in range(len(len1)):
                     if params.architecture == "decoder_only":
                         src = env.idx_to_infix(x2[1 : len1[i] - 1, i].tolist(), True)

@@ -469,7 +469,7 @@ class WordBase(Encoder):
     Encode a word in 'run' notation
     """
 
-    def __init__(self, params):
+    def __init__(self):
         super().__init__()
         self.symbols = ['a', 'b', 'c', 'd', 'e', 'f','g','h']
 

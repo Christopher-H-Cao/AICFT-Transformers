@@ -1,0 +1,71 @@
+import io
+import wandb
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+import sys
+from rels_utils import get_dihedral_images, get_rel_instances_in_symb, replace_trivial0_terms
+from src.envs.encoders import Rational
+from src.envs.cfts import CFTEnvironment
+from train import get_parser
+import json
+import numpy as np
+from collections import Counter, OrderedDict
+import itertools
+from itertools import islice
+
+def get_parser():
+    """
+    Generate a parameters parser.
+    """
+    # parse parameters
+    parser = argparse.ArgumentParser(description="data generator")
+
+    # main parameters
+    parser.add_argument("--path_to_csv", type=str, default=None,
+                        help="full path to input csv")
+    parser.add_argument("--path_to_outfile", type=str, default = "./su2_cfts.data", help = "where to write the data?")
+    parser.add_argument("--num_rows", type=int, default=-1, help="how many rows to take from the csv?")
+    parser.add_argument("--num_cols", type=int, default=-1, help="how many terms from each row?")
+    parser.add_argument("--target_variable", type=str, default='cc', help="target variable?")
+
+    return parser
+
+def get_ade(k):
+    ade=[]
+    if k >= 0: ade += 'a'
+    if k >= 4 and k % 4 == 0: ade += 'd'
+    if k >= 6 and (k+2) % 4 == 0: ade += 'd'
+    if (k == 10 or k==16 or k==28): ade += 'e'
+    return ade
+
+def export_pairs(idata, odata, outfile):
+    file_handler = io.open(outfile, mode="wt", encoding="utf-8")
+    for i, (k, v) in enumerate(zip(idata, odata)):
+        k=[str(num) for num in k]
+        v=[str(num) for num in v]
+        prefix1_str = " ".join(k)
+        prefix2_str = " ".join(v)
+        file_handler.write(f"{i + 1}|{prefix1_str}\t{prefix2_str}\n")
+        file_handler.flush()
+    file_handler.close()
+
+if __name__ == '__main__':
+    params=get_parser().parse_args()
+    df = pd.read_csv(params.path_to_csv)
+    if params.num_rows > 0:
+        df=df.head(params.num_rows)
+    if params.num_cols > 0:
+        df=df.iloc[:, : num_cols]
+
+    if params.target_variable == 'ade':
+        df['ade']=get_ade(df.shape[0])
+    elif params.target_variable == 'cc':
+        df['cc'] = 3*np.arange(df.shape[0])/(np.arange(df.shape[0])+2)
+    else:
+        print('Error! Unknown target variable!')
+        raise ValueError
+
+    idata = df.loc[:, df.columns != params.target_variable].values.tolist()
+    odata = df.loc[:, df.columns == params.target_variable].values.tolist()
+    export_pairs(idata,odata, params.path_to_outfile)

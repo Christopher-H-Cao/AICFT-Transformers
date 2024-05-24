@@ -1,4 +1,4 @@
-# PyTorch test of training 6loop coef_from_word on HTCondor
+# PyTorch test of training cfts coef_from_word on HTCondor
 # Submit file 
 
 # Must set the universe to Docker
@@ -7,14 +7,14 @@ universe = docker
 docker_network_type = host
 
 # set the log, error and output files 
-log = log/train_6loop_coef_from_word_$(Cluster)_$(Process).log.txt
-error = err/train_6loop_coef_from_word_$(Cluster)_$(Process).err.txt
-output = out/train_6loop_coef_from_word_$(Cluster)_$(Process).out.txt
+log = log/train_cfts_$(Cluster)_$(Process).log.txt
+error = err/train_cfts_$(Cluster)_$(Process).err.txt
+output = out/train_cfts_$(Cluster)_$(Process).out.txt
 
 # set the executable to run
-executable = scripts/coef_from_word/run_training_6loop.sh
+executable = ./run_training_cfts.sh
 #PID, n_layers enc/dec
-arguments = coef_from_word_$(Cluster)_$(Process) $(layers) $(seed) $(Cluster)$(Process) 
+arguments = cfts_$(Cluster)_$(Process) $(layers) $(seed) $(Cluster)$(Process) 
 
 # take our python script to the compute node
 # the script and data are shared by multiple examples and located in a

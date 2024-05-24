@@ -47,7 +47,10 @@ class CFTEnvironment(object):
         self.modulus = params.modulus
         self.registers = params.registers
         self.append_registers = params.append_registers
-        self.output_encoder = encoders.Rational(base)
+        if self.operation == 'ADE':
+            self.output_encoder = encoders.WordBase()
+        else:
+            self.output_encoder = encoders.Rational(base)
         #if params.numeric_import_input:
         #    self.input_encoder = encoders.RationalVector(params, base)
 
@@ -124,7 +127,7 @@ class CFTEnvironment(object):
         """
         Convert output expression (list of chars) to reformatted string.
         """
-        if self.operation == "coeffs": 
+        if (self.operation == "cc" or self.operation == "ADE"):
             m = self.output_encoder.decode(lst)
         elif self.operation == "mask":
             m = self.input_to_infix(lst)
@@ -146,7 +149,7 @@ class CFTEnvironment(object):
         #Bijection from rationals to integers using unique prime factorization
         #decode integers into rationals
         cls = nat_to_int(i)
-        if self.operation == "coeffs":
+        if self.operation == "cc":
             facs = get_factordict(cls)
             mydict={}
             my_frac = 1
@@ -155,13 +158,15 @@ class CFTEnvironment(object):
                 my_frac *= pow(k, n_to_s(v))
             thisfrac= Fraction(my_frac).limit_denominator(10000)
             return f'{thisfrac.numerator}'+'/'+f'{thisfrac.denominator}'
+        elif self.operation == "ADE":
+            return chr(i)
         else:
             return str(cls)
 
     def code_class(self, xi, yi):
         #Bijection from rationals to integers using unique prime factorization
         #map each possible output to an integer bucket, to log acc in each bucket
-        if self.operation =="coeffs":
+        if self.operation =="cc":
             nre = self.output_encoder.decode(yi)
             a = nre.numerator
             b = nre.denominator
@@ -175,6 +180,8 @@ class CFTEnvironment(object):
                 newfacs[k] = s_to_n(v)
                 my_int *= pow(k,s_to_n(v))
             return int_to_nat(my_int)
+        elif self.operation == "ADE":
+            return ord(yi)
         else:
             return int_to_nat(int(yi[0]))
 
@@ -317,8 +324,8 @@ class CFTEnvironment(object):
         Register environment parameters.
         """
         parser.add_argument(
-            "--operation", type=str, default="coeffs", choices=['coeffs', 'mask'],
-            help="Operations to be performed: predict coeffs"
+            "--operation", type=str, default="cc", choices=['cc', 'ADE'],
+            help="Operations to be performed: central charge, or ADE?"
         )
         parser.add_argument("--sign_last", type=bool_flag, default=False, help="Sign as last token.")
 
