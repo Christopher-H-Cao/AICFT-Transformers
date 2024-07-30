@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 from rels_utils import get_dihedral_images, get_rel_instances_in_symb, replace_trivial0_terms
+from src.utils import bool_flag, initialize_exp
 from src.envs.encoders import Rational
 from src.envs.cfts import CFTEnvironment
 from train import get_parser
@@ -13,6 +14,7 @@ import numpy as np
 from collections import Counter, OrderedDict
 import itertools
 from itertools import islice
+import argparse
 
 def get_parser():
     """
@@ -28,10 +30,12 @@ def get_parser():
     parser.add_argument("--num_rows", type=int, default=-1, help="how many rows to take from the csv?")
     parser.add_argument("--num_cols", type=int, default=-1, help="how many terms from each row?")
     parser.add_argument("--target_variable", type=str, default='cc', help="target variable?")
-
+    parser.add_argument("--target_first", type=bool_flag, default=False, help="is the target variable given first or last?")
+    
     return parser
 
 def get_ade(k):
+    #This is incorrect, need input from Chris
     ade=[]
     if k >= 0: ade += 'a'
     if k >= 4 and k % 4 == 0: ade += 'd'
@@ -53,19 +57,27 @@ def export_pairs(idata, odata, outfile):
 if __name__ == '__main__':
     params=get_parser().parse_args()
     df = pd.read_csv(params.path_to_csv)
+    if params.target_first:
+        target = df.iloc[:,0]
+        data = df.iloc[:,1:]
+    else:
+        target = df.iloc[:,-1:]
+        data = df.iloc[:,:-1]
+
     if params.num_rows > 0:
         df=df.head(params.num_rows)
     if params.num_cols > 0:
         df=df.iloc[:, : num_cols]
 
-    if params.target_variable == 'ade':
-        df['ade']=get_ade(df.shape[0])
-    elif params.target_variable == 'cc':
-        df['cc'] = 3*np.arange(df.shape[0])/(np.arange(df.shape[0])+2)
+    #if params.target_variable == 'ade':
+    #    df['ade']=target
+    if params.target_variable == 'cc':
+        df['cc'] = target
     else:
         print('Error! Unknown target variable!')
         raise ValueError
 
-    idata = df.loc[:, df.columns != params.target_variable].values.tolist()
-    odata = df.loc[:, df.columns == params.target_variable].values.tolist()
+    idata = data.values.tolist()
+    odata = target.values.tolist()
     export_pairs(idata,odata, params.path_to_outfile)
+    print(f"Please shuffle the data with \"shuf {params.path_to_outfile} > {params.path_to_outfile}\"")

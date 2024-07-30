@@ -47,14 +47,25 @@ class CFTEnvironment(object):
         self.modulus = params.modulus
         self.registers = params.registers
         self.append_registers = params.append_registers
-        if self.operation == 'ADE':
+        #tokenize input CFT data
+        if 'decimal' in self.operation:
+            self.word_encoder = encoders.Rational(base)
+        else:
+            self.word_encoder = encoders.FastRational(base)
+        # tokenize target
+        if 'ADE' in self.operation:
             self.output_encoder = encoders.WordBase()
         else:
-            self.output_encoder = encoders.Rational(base)
-        #if params.numeric_import_input:
+            if 'decimal' in self.operation:
+                self.output_encoder = encoders.Rational(base)
+            else:
+                self.output_encoder = encoders.FastRational(base)
+
+
+                #if params.numeric_import_input:
         #    self.input_encoder = encoders.RationalVector(params, base)
 
-        self.word_encoder = encoders.Rational(base)
+
 
         self.float_tolerance = 0.1 # params.float_tolerance
         self.additional_tolerance = []
@@ -127,7 +138,7 @@ class CFTEnvironment(object):
         """
         Convert output expression (list of chars) to reformatted string.
         """
-        if (self.operation == "cc" or self.operation == "ADE"):
+        if ("cc" in self.operation or "ADE" in self.operation):
             m = self.output_encoder.decode(lst)
         elif self.operation == "mask":
             m = self.input_to_infix(lst)
@@ -324,7 +335,7 @@ class CFTEnvironment(object):
         Register environment parameters.
         """
         parser.add_argument(
-            "--operation", type=str, default="cc", choices=['cc', 'ADE'],
+            "--operation", type=str, default="cc", choices=["cc", "cc_decimal","ADE", "ADE_decimal"],
             help="Operations to be performed: central charge, or ADE?"
         )
         parser.add_argument("--sign_last", type=bool_flag, default=False, help="Sign as last token.")

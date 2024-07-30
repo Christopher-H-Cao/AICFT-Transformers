@@ -128,6 +128,8 @@ class EnvDataset(Dataset):
 
         self.data = [xy.split("\t") for _, xy in lines]
         self.data = [xy for xy in self.data if len(xy) == 2]
+        print(self.data)
+        raise ValueError
         self.nextpos = self.basepos + len(self.data)
         logger.info(
             f"Loaded {len(self.data)} equations from the disk. seekpos {self.seekpos}, "
@@ -304,11 +306,15 @@ class EnvDataset(Dataset):
             else:
                 val = val % self.env.modulus
             """
-            val = float(y[0])
+            if 'decimal' in self.operation:
+                val = float(y[0])
+            else: val=y[0]
             y = self.env.output_encoder.encode(val)
             x_new = []
             for num in x:
-                x_new += self.env.word_encoder.encode(float(num))
+                if 'decimal' in self.operation:
+                    x_new += self.env.word_encoder.encode(float(num))
+                else: x_new += self.env.word_encoder.encode(num)
             x = x_new
         return x, y
 

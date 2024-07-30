@@ -28,9 +28,9 @@ mv ./runs_train ChromoBoot_CFT
 mv ./wandb ChromoBoot_CFT
 fi
 cd ChromoBoot_CFT
-mkdir sample_data
-cp -r ../sample_data/su2_cfts.* ./sample_data
-timeout 4h python train.py --reload_data cfts,./sample_data/su2_cfts.data.train,./sample_data/su2_cfts.data.valid,./sample_data/su2_cfts.data.valid --max_epoch 20 --n_enc_layers $2 --n_dec_layers $2 --num_workers 1 --eval_verbose 1 --batch_size 512 --batch_size_eval 10 --enc_emb_dim 512 --dec_emb_dim 512 --amp 1 --fp16 True --epoch_size 900  --resume_wandb True --env_base_seed $3 --exp_id $4 
+mkdir cft_data
+cp -r ../cft_data/su2_cfts.* ./cft_data
+timeout 4h python train.py --reload_data cfts,./cft_data/su2_cfts.data.train,./cft_data/su2_cfts.data.valid,./cft_data/su2_cfts.data.valid --max_epoch 20 --n_enc_layers $2 --n_dec_layers $2 --num_workers 1 --eval_verbose 1 --batch_size 512 --batch_size_eval 10 --enc_emb_dim 512 --dec_emb_dim 512 --amp 1 --fp16 True --epoch_size 900  --resume_wandb True --env_base_seed $3 --exp_id $4 
 timeout_exit_status=$?
 # Uses the bash notation of `$?` to call the exit value of the last executed command
 # and to save it in a variable called `timeout_exit_status`.
