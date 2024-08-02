@@ -2,7 +2,7 @@
 # Submit file 
 
 # Must set the universe to Docker
-docker_image = garrettmerz/chromoboot:0.0.10
+docker_image = garrettmerz/chromoboot:1.0.0
 universe = docker
 docker_network_type = host
 
