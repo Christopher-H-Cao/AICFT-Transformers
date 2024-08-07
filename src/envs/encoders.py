@@ -130,18 +130,18 @@ class FastRational(Encoder):
             num=value
 
         if "/" not in num:
-            denom = 1
+            denom = int(1)
             numer = int(num)
         else:
             frac=num.split("/")
-            numer=frac[0]
-            denom=frac[1]
-            my_gcd=gcd(int(numer),int(denom))
-            numer=int(int(numer)/my_gcd)
-            denom=int(int(denom)/my_gcd)
+            numer=abs(int(frac[0]))
+            denom=abs(int(frac[1]))
+            my_gcd=gcd(numer,denom)
+            numer=int(numer/my_gcd)
+            denom=int(denom/my_gcd)
 
             numpref=[]
-            while numer > 0:
+            while int(numer) > 0:
                 numpref.append(str(numer % self.base))
                 numer = numer // self.base
             prefix += numpref[::-1]
@@ -156,7 +156,6 @@ class FastRational(Encoder):
             prefix = prefix + sign
         else:
             prefix = sign + prefix
-
         return prefix
 
     def decode(self, lst):

@@ -4,11 +4,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import sys
+<<<<<<< HEAD
 from rels_utils import get_dihedral_images, get_rel_instances_in_symb, replace_trivial0_terms
+=======
+#from rels_utils import get_dihedral_images, get_rel_instances_in_symb, replace_trivial0_terms
+>>>>>>> ad6217c (clean up)
 from src.utils import bool_flag, initialize_exp
 from src.envs.encoders import Rational
 from src.envs.cfts import CFTEnvironment
-from train import get_parser
+#from train import get_parser
 import json
 import numpy as np
 from collections import Counter, OrderedDict
@@ -80,4 +84,9 @@ if __name__ == '__main__':
     idata = data.values.tolist()
     odata = target.values.tolist()
     export_pairs(idata,odata, params.path_to_outfile)
+<<<<<<< HEAD
     print(f"Please shuffle the data with \"shuf {params.path_to_outfile} > {params.path_to_outfile}\"")
+=======
+
+    print(f"Please shuffle the data with shuf {params.path_to_outfile} --output {params.path_to_outfile}")
+>>>>>>> ad6217c (clean up)

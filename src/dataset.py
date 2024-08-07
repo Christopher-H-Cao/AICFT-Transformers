@@ -183,7 +183,6 @@ class EnvDataset(Dataset):
             y = x0
             x = [self.env.make_masks(xval, self.train, self.env.idx_to_infix([self.env.mask_index])) for xval in x0]
             nb_eqs = [0 for xi in x]
-        #print(x,y)
 
         if self.decoder_only:
             xy = [ xi + ['<sep>'] + yi for xi, yi in zip(x,y)]

@@ -10,7 +10,7 @@ to install any required packages that you may not have. Make sure you are using 
 
 *make_cft_data_from_csv.py:* 
 
-`python make_cft_data_from_csv.py --path_to_csv {YOUR CSV} --path_to_output_file {OUTPUT FILE} --num_rows {rows} --num_cols {columns} --target_variable {'cc' or 'ade'}`
+`python make_cft_data_from_csv.py --path_to_csv {YOUR CSV} --path_to_outfile {OUTPUT FILE} --num_rows {rows} --num_cols {columns} --target_variable {'cc' or 'ade'}`
 
 This code processes a csv of CFTs, with the CC first. You can truncate it to only n terms of each cft with 'num_cols', or take only the first n cfts with 'n_rows'.
 This script is totally agnostic to the format of input data (decimal or rational).
@@ -18,7 +18,11 @@ You can also modify this script to calculate A,D,E or CC using k (should just be
 
 *shuffling and concatenating:*
 
+<<<<<<< HEAD
 `shuf {OUTPUT FILE} > {OUTPUT FILE}`
+=======
+`shuf {OUTPUT FILE} --output {OUTPUT FILE}`
+>>>>>>> ad6217c (clean up)
 
 Shuffle the file. `make_cft_data_from_csv.py` outputs this line for you to copy). Note that for macs with GNU installed but not by default, need to use `gshuf` instead of `shuf`. 
 
