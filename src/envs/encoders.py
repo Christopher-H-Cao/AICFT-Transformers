@@ -125,13 +125,23 @@ class FastRational(Encoder):
         if value[0] == "-":
             sign = ['-']
             num=value[0:]
+        elif value[0] == "+":
+            sign = ['+']
+            num=value[0:]
         else:
             sign = ['+']
             num=value
-
         if "/" not in num:
-            denom = int(1)
-            numer = int(num)
+            numer=abs(int(num))
+            if numer == 0:
+                prefix = ['0']
+            else:
+                numpref = []
+                while numer > 0:
+                    numpref.append(str(numer % self.base))
+                    numer = numer // self.base
+                prefix += numpref[::-1]
+            prefix += ["/", "1"]
         else:
             frac=num.split("/")
             numer=abs(int(frac[0]))
