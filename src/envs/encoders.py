@@ -141,7 +141,7 @@ class FastRational(Encoder):
                     numpref.append(str(numer % self.base))
                     numer = numer // self.base
                 prefix += numpref[::-1]
-            prefix += ["/", "1"]
+            #prefix += ["/", "1"]
         else:
             frac=num.split("/")
             numer=abs(int(frac[0]))

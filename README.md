@@ -2,7 +2,7 @@
 
 ## Setup
 From a fresh conda environment, do 
-pip install -r requirements.txt
+conda env create --file conda_reqs.txt
 
 to install any required packages that you may not have. Make sure you are using python 3.10 (my version is 3.10.10) as pytorch does not yet support python 3.11!
 
