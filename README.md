@@ -18,11 +18,7 @@ You can also modify this script to calculate A,D,E or CC using k (should just be
 
 *shuffling and concatenating:*
 
-<<<<<<< HEAD
-`shuf {OUTPUT FILE} > {OUTPUT FILE}`
-=======
 `shuf {OUTPUT FILE} --output {OUTPUT FILE}`
->>>>>>> ad6217c (clean up)
 
 Shuffle the file. `make_cft_data_from_csv.py` outputs this line for you to copy). Note that for macs with GNU installed but not by default, need to use `gshuf` instead of `shuf`. 
 
