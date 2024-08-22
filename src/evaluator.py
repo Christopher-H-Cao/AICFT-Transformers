@@ -457,12 +457,17 @@ class Evaluator(object):
                     for inp in inputs:
                         if "mask" in self.env.operation:
                             outputs.append(env.check_masked_hypothesis(inp))
+                        elif "seq2seq" in self.env.operation:
+                            outputs.append(env.check_seq2seq_hypothesis(inp))
                         else:
                             outputs.append(env.check_hypothesis(inp))
                 else:
                     with ProcessPoolExecutor(max_workers=20) as executor:
                         if "mask" in self.env.operation:
                             for output in executor.map(env.check_masked_hypothesis, inputs, chunksize=1):
+                                outputs.append(output)
+                        if "seq2seq" in self.env.operation:
+                            for output in executor.map(env.check_seq2seq_hypothesis, inputs, chunksize=1):
                                 outputs.append(output)
                         else:
                             for output in executor.map(env.check_hypothesis, inputs, chunksize=1):
@@ -508,7 +513,7 @@ class Evaluator(object):
 
                         #if we haven't found a valid one yet
                         if not valid[i]:
-                            if ("mask" in self.params.operation):
+                            if ("mask" in self.params.operation) or ("seq2seq" in self.params.operation):
                                 for metric in n_eval_metrics:
                                     if gen["hyp_evals"][metric] >= 0:
                                         hyp_eval_counts[metric] = gen["hyp_evals"][metric]
@@ -587,7 +592,7 @@ class Evaluator(object):
                 scores[f"{data_type}_{task}_tokenwise_macro_acc"] = mac_acc.item()
                 scores[f"{data_type}_{task}_tokenwise_micro_acc"] = mic_acc.item()
 
-            if "mask" in self.params.operation:
+            if ("mask" in self.params.operation or "seq2seq" in self.params.operation):
                 for metric in n_eval_metrics:
                     if "phrases" in metric: continue
                     else:

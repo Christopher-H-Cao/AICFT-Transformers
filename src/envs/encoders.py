@@ -107,6 +107,141 @@ class Rational(Encoder):
         res = Fraction(numres, denomres)
         return -res if lst[0] == '-' else res
 
+class AllSeqs(Encoder):
+    """
+    Letters AND rational numbers, in base params.base
+    """
+    def __init__(self, base):
+        super().__init__()
+        self.base = base
+        self.sign_last = False
+        #self.sign_last = params.sign_last
+        self.symbols = [str(i) for i in range(self.base)] + ["/"]
+    def encode(self, value):
+        if str(value).isalpha(): return value
+        #encode a rational string as tokens
+        #get sign
+        prefix=[]
+        value=str(value)
+        if value[0] == "-":
+            sign = ['-']
+            num=value[0:]
+        elif value[0] == "+":
+            sign = ['+']
+            num=value[0:]
+        else:
+            sign = ['+']
+            num=value
+        if "/" not in num:
+            numer=abs(int(num))
+            if numer == 0:
+                prefix = ['0']
+            else:
+                numpref = []
+                while numer > 0:
+                    numpref.append(str(numer % self.base))
+                    numer = numer // self.base
+                prefix += numpref[::-1]
+            #prefix += ["/", "1"]
+        else:
+            frac=num.split("/")
+            numer=abs(int(frac[0]))
+            denom=abs(int(frac[1]))
+            my_gcd=gcd(numer,denom)
+            numer=int(numer/my_gcd)
+            denom=int(denom/my_gcd)
+
+            numpref=[]
+            while int(numer) > 0:
+                numpref.append(str(numer % self.base))
+                numer = numer // self.base
+            prefix += numpref[::-1]
+            prefix.append("/")
+            denpref=[]
+            while denom > 0:
+                denpref.append(str(denom % self.base))
+                denom = denom // self.base
+            prefix += denpref[::-1]
+
+        if self.sign_last:
+            prefix = prefix + sign
+        else:
+            prefix = sign + prefix
+        return prefix
+
+    def decode(self, lst):
+        if all([str(i).isalpha() for i in lst]): return str(lst)
+        # decode a string of tokens as a Fraction object.
+        if len(lst) < 1:
+            return None
+        if "/" not in lst:
+            if self.sign_last:
+                if lst[-1] != '+' and lst[-1] != '-':
+                    return None
+                if len(lst) == 1:
+                    return 0
+                res = 0
+                for x in lst[:-1]:
+                    if not (x.isdigit()):
+                        return None
+                    res = res * self.base + int(x)
+                return -res if lst[-1] == '-' else res
+
+            if (lst[0] != '+' and lst[0] != '-'):
+                return None
+            if len(lst) == 1:
+                return 0
+            res = 0
+            for x in lst[1:]:
+                if not (x.isdigit()):
+                    return None
+                res = res * self.base + int(x)
+            return -res if lst[0] == '-' else res
+
+        if self.sign_last:
+            if lst[-1] != '+' and lst[-1] != '-':
+                return None
+            if len(lst) == 1:
+                return 0
+            numres = 0
+            denomres = 0
+            temp = lst[:-1].index("/")
+            numer = lst[:-1][:temp]
+            denom = lst[:-1][temp+1:]
+            for x in numer:
+                if not (x.isdigit()):
+                    return None
+                numres = numres * self.base + int(x)
+            for x in denom:
+                if not (x.isdigit()):
+                    return None
+                denomres = denomres * self.base + int(x)
+            res=Fraction(numres,denomres)
+            return -res if lst[-1] == '-' else res
+
+        if len(lst) < 1 or (lst[0] != '+' and lst[0] != '-'):
+            return None
+        if len(lst) == 1:
+            return 0
+        numres = 0
+        denomres = 0
+        temp = lst[1:].index("/")
+        numer = lst[1:][:temp]
+        denom = lst[1:][temp+1:]
+        for x in numer:
+            if not (x.isdigit()):
+                return None
+            numres = numres * self.base + int(x)
+        for x in denom:
+            if not (x.isdigit()):
+                return None
+            denomres = denomres * self.base + int(x)
+        if denomres == 0:
+            numres=0
+            denomres=1
+        res = Fraction(numres, denomres)
+        return -res if lst[0] == '-' else res
+
 class FastRational(Encoder):
     """
     Rational numbers, in base params.base
@@ -170,10 +305,32 @@ class FastRational(Encoder):
 
     def decode(self, lst):
         # decode a string of tokens as a Fraction object.
-        if "/" not in lst:
-            return None
         if len(lst) < 1:
             return None
+        if "/" not in lst:
+            if self.sign_last:
+                if lst[-1] != '+' and lst[-1] != '-':
+                    return None
+                if len(lst) == 1:
+                    return 0
+                res = 0
+                for x in lst[:-1]:
+                    if not (x.isdigit()):
+                        return None
+                    res = res * self.base + int(x)
+                return -res if lst[-1] == '-' else res
+
+            if (lst[0] != '+' and lst[0] != '-'):
+                return None
+            if len(lst) == 1:
+                return 0
+            res = 0
+            for x in lst[1:]:
+                if not (x.isdigit()):
+                    return None
+                res = res * self.base + int(x)
+            return -res if lst[0] == '-' else res
+
         if self.sign_last:
             if lst[-1] != '+' and lst[-1] != '-':
                 return None
@@ -217,7 +374,6 @@ class FastRational(Encoder):
             denomres=1
         res = Fraction(numres, denomres)
         return -res if lst[0] == '-' else res
-
 
 class Binary(Encoder):
     """

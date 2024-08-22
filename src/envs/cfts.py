@@ -23,6 +23,15 @@ SPECIAL_WORDS = SPECIAL_WORDS + [f"<SPECIAL_{i}>" for i in range(10)]
 
 logger = getLogger()
 
+def group(seq, seps):
+    g = []
+    for i,el in enumerate(seq):
+        if el in seps and i != 0:
+            yield g
+            g = []
+        g.append(el)
+    yield g
+
 class InvalidPrefixExpression(Exception):
     def __init__(self, data):
         self.data = data
@@ -38,8 +47,11 @@ class CFTEnvironment(object):
         self.max_len = params.max_len
         self.operation = params.operation
 
-        #define some extra accuracy metrics to track here:
-        self.hyp_eval_metrics =["mag","sign","denom", "numer"]
+        # define some extra accuracy metrics to track here:
+        if self.operation == "seq2seq":
+            self.hyp_eval_metrics =["matched","good","nphrases"]
+        else:
+            self.hyp_eval_metrics =["mag","sign","denom", "numer"]
 
         assert params.reload_data != ""
         self.eval_lookup_dict=params.eval_lookup_dict
@@ -49,15 +61,19 @@ class CFTEnvironment(object):
         self.append_registers = params.append_registers
         #tokenize input CFT data
         if 'decimal' in self.operation:
-            self.word_encoder = encoders.Rational(base)
+            self.input_encoder = encoders.Rational(base)
+        elif 'seq2seq' in self.operation:
+            self.input_encoder = encoders.AllSeqs(base)
         else:
-            self.word_encoder = encoders.FastRational(base)
+            self.input_encoder = encoders.FastRational(base)
         # tokenize target
         if 'ADE' in self.operation:
             self.output_encoder = encoders.WordBase()
         else:
             if 'decimal' in self.operation:
                 self.output_encoder = encoders.Rational(base)
+            elif 'seq2seq' in self.operation:
+                self.output_encoder = encoders.AllSeqs(base)
             else:
                 self.output_encoder = encoders.FastRational(base)
 
@@ -140,13 +156,18 @@ class CFTEnvironment(object):
         """
         if ("cc" in self.operation or "ADE" in self.operation):
             m = self.output_encoder.decode(lst)
+            return str(m)
+        elif ("seq2seq" in self.operation):
+            m = [self.output_encoder.decode(elem) for elem in group(lst, ['+','-','a','d','e'])]
+            return [str(elem) for elem in m]
         elif self.operation == "mask":
             m = self.input_to_infix(lst)
+            return str(m)
         else:
             m = int(lst[0])
+            return str(m)
         if m is None:
             return lst
-        return str(m)
 
     def idx_to_infix(self, idx, input=True):
         """
@@ -215,6 +236,24 @@ class CFTEnvironment(object):
         n = 0 if v.numerator == w.numerator else -1.0
         return c, a, b, d, n
 
+    def check_multi_prediction(self, src, tgt, hyp):
+        #tgt and hyp are both lists.
+        #Return: are all outputs matched, how many are matched, how many are the correct format, how many total
+        if (len(hyp) == 0 or len(tgt) == 0) or (len(hyp) != len(tgt)):
+            return -1.0, -1.0, -1.0, -1.0
+        if hyp == tgt:
+            return 0.0, len(hyp), len(hyp), len(hyp)
+
+        num_corr,num_tot,num_match=0,0,0
+        for elem_tgt,elem_hyp in zip(tgt,hyp):
+            num_tot += 1
+            if elem_tgt==elem_hyp:
+                num_corr += 1
+            #check: are tgt and hyp both letters (or rationals/numbers?)
+            if (elem_tgt.isalpha() and elem_hyp.isalpha()) or (not elem_tgt.isalpha() and not elem_hyp.isalpha()):
+                num_match += 1
+        return -1.0, num_corr, num_match, num_tot
+
     def check_hypothesis(self,eq):
         """
         Check a hypothesis for a given equation and its solution.
@@ -246,6 +285,42 @@ class CFTEnvironment(object):
         eq["hyp_evals"]["numer"] = n
         return eq
 
+    def check_seq2seq_hypothesis(self,eq):
+        """
+        Check a hypothesis for a given equation and its solution.
+        """
+        src = [self.id2word[wid] for wid in eq["src"]]
+        tgt = [self.id2word[wid] for wid in eq["tgt"]]
+        hyp = [self.id2word[wid] for wid in eq["hyp"]]
+
+        # update hypothesis
+        eq["src"] = self.input_to_infix(src)
+        eq["tgt"] = self.output_to_infix(tgt)
+        eq["hyp"] = self.output_to_infix(hyp)
+        eq["hyp_evals"] = {}
+
+        #do ALL key/val pairs match the tgt completely?
+        #~how many~ key/val pairs match the tgt completely?
+        #~how many~ key/val pairs are valid?
+
+        try:
+            is_fullmatch,num_match,num_ok,num_phrases = self.check_multi_prediction(eq["src"],eq["tgt"],eq["hyp"])
+        except ValueError:
+            is_fullmatch = -1.0
+            num_match = -1.0
+            num_ok = -1.0
+            num_phrases = -1.0
+
+        #valid hyp = all correct. Universal metric
+        eq["is_valid"] = is_fullmatch
+        #task specific hyp metrics
+        eq["hyp_evals"]["matched"] = num_match
+        eq["hyp_evals"]["good"] = num_ok
+        eq["hyp_evals"]["nphrases"] = num_phrases
+        #print(eq)
+        return eq
+
+
     def list_to_keyvals(self,mylist):
         numlst = []
         charlst = []
@@ -256,7 +331,7 @@ class CFTEnvironment(object):
             if entry.isdigit() or entry == '+' or entry == '-' or ('E' in entry):
                 # if we've finished a word, add it to the dict before starting this coef
                 if charlst != []:
-                    key = self.word_encoder.decode(charlst)
+                    key = self.input_encoder.decode(charlst)
                     val = self.output_encoder.decode(numlst)
                     this_dict[''.join(key)] = val
                     charlst = []
@@ -266,7 +341,7 @@ class CFTEnvironment(object):
                 charlst.append(entry)
 
         #DEBUG THIS
-        key = ''.join(self.word_encoder.decode(charlst))
+        key = ''.join(self.input_encoder.decode(charlst))
         val = self.output_encoder.decode(numlst)
         this_dict[''.join(key)] = val
         return this_dict
@@ -335,7 +410,7 @@ class CFTEnvironment(object):
         Register environment parameters.
         """
         parser.add_argument(
-            "--operation", type=str, default="cc", choices=["cc", "cc_decimal","ADE", "ADE_decimal"],
+            "--operation", type=str, default="cc", choices=["cc", "cc_decimal","ADE", "ADE_decimal", "seq2seq"],
             help="Operations to be performed: central charge, or ADE?"
         )
         parser.add_argument("--sign_last", type=bool_flag, default=False, help="Sign as last token.")

@@ -128,7 +128,6 @@ class EnvDataset(Dataset):
 
         self.data = [xy.split("\t") for _, xy in lines]
         self.data = [xy for xy in self.data if len(xy) == 2]
-        print(self.data)
         raise ValueError
         self.nextpos = self.basepos + len(self.data)
         logger.info(
@@ -305,15 +304,23 @@ class EnvDataset(Dataset):
             else:
                 val = val % self.env.modulus
             """
+
             if 'decimal' in self.operation:
                 val = float(y[0])
-            else: val=y[0]
-            y = self.env.output_encoder.encode(val)
+                y = self.env.output_encoder.encode(val)
+            elif 'seq2seq' in self.operation:
+                y_new = []
+                for num in y:
+                    y_new += self.env.output_encoder.encode(num)
+                y = y_new
+            else:
+                val=y[0]
+                y = self.env.output_encoder.encode(val)
             x_new = []
             for num in x:
                 if 'decimal' in self.operation:
-                    x_new += self.env.word_encoder.encode(float(num))
-                else: x_new += self.env.word_encoder.encode(num)
+                    x_new += self.env.input_encoder.encode(float(num))
+                else: x_new += self.env.input_encoder.encode(num)
             x = x_new
         return x, y
 
@@ -344,7 +351,7 @@ class EnvDataset(Dataset):
                 y = self.env.output_encoder.encode(val)
             else:
                 y = self.env.output_encoder.encode(val)
-            x=self.env.word_encoder.encode(word)
+            x=self.env.input_encoder.encode(word)
             sentence += y
             sentence += x
         #print(x)

@@ -86,7 +86,7 @@ class Trainer(object):
 
         # validation metrics. Begin with an underscore if we want to save ckpt with min instead of max
         self.metrics = []
-        if 'mask' in self.env.operation: vms = params.validation_metrics_mask
+        if 'mask' in self.env.operation or 'seq2seq' in self.env.operation: vms = params.validation_metrics_mask
         else: vms = params.validation_metrics
 
         metrics = [m for m in vms.split(",") if m != ""]
