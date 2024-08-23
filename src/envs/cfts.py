@@ -23,6 +23,14 @@ SPECIAL_WORDS = SPECIAL_WORDS + [f"<SPECIAL_{i}>" for i in range(10)]
 
 logger = getLogger()
 
+
+def is_signed_digit(obj):
+    try:
+        myobj = int(obj)
+        return True
+    except ValueError:
+        return False
+
 def group(seq, seps):
     g = []
     for i,el in enumerate(seq):
@@ -49,7 +57,8 @@ class CFTEnvironment(object):
 
         # define some extra accuracy metrics to track here:
         if self.operation == "seq2seq":
-            self.hyp_eval_metrics =["matched","good","nphrases"]
+            #num output terms correct, num output terms correct type (letter
+            self.hyp_eval_metrics =["matched","typematched","nphrases"]
         else:
             self.hyp_eval_metrics =["mag","sign","denom", "numer"]
 
@@ -244,15 +253,21 @@ class CFTEnvironment(object):
         if hyp == tgt:
             return 0.0, len(hyp), len(hyp), len(hyp)
 
-        num_corr,num_tot,num_match=0,0,0
+        num_corr,num_tot,num_typematch=0,0,0
         for elem_tgt,elem_hyp in zip(tgt,hyp):
             num_tot += 1
             if elem_tgt==elem_hyp:
                 num_corr += 1
             #check: are tgt and hyp both letters (or rationals/numbers?)
-            if (elem_tgt.isalpha() and elem_hyp.isalpha()) or (not elem_tgt.isalpha() and not elem_hyp.isalpha()):
-                num_match += 1
-        return -1.0, num_corr, num_match, num_tot
+            if (elem_tgt.isalpha() and elem_hyp.isalpha()):
+                num_typematch += 1
+            elif ("/" in elem_tgt and "/" in elem_hyp):
+                num_typematch += 1
+            elif (is_signed_digit(elem_tgt) and not is_signed_digit(elem_hyp)):
+                num_typematch += 1
+            else: continue
+
+        return -1.0, num_corr, num_typematch, num_tot
 
     def check_hypothesis(self,eq):
         """
@@ -304,18 +319,18 @@ class CFTEnvironment(object):
         #~how many~ key/val pairs are valid?
 
         try:
-            is_fullmatch,num_match,num_ok,num_phrases = self.check_multi_prediction(eq["src"],eq["tgt"],eq["hyp"])
+            is_fullmatch,num_corr,num_ok,num_phrases = self.check_multi_prediction(eq["src"],eq["tgt"],eq["hyp"])
         except ValueError:
             is_fullmatch = -1.0
-            num_match = -1.0
+            num_corr = -1.0
             num_ok = -1.0
             num_phrases = -1.0
 
         #valid hyp = all correct. Universal metric
         eq["is_valid"] = is_fullmatch
         #task specific hyp metrics
-        eq["hyp_evals"]["matched"] = num_match
-        eq["hyp_evals"]["good"] = num_ok
+        eq["hyp_evals"]["matched"] = num_corr
+        eq["hyp_evals"]["typematched"] = num_ok
         eq["hyp_evals"]["nphrases"] = num_phrases
         #print(eq)
         return eq
@@ -410,7 +425,7 @@ class CFTEnvironment(object):
         Register environment parameters.
         """
         parser.add_argument(
-            "--operation", type=str, default="cc", choices=["cc", "cc_decimal","ADE", "ADE_decimal", "seq2seq"],
+            "--operation", type=str, default="seq2seq", choices=["cc", "cc_decimal","ADE", "ADE_decimal", "seq2seq"],
             help="Operations to be performed: central charge, or ADE?"
         )
         parser.add_argument("--sign_last", type=bool_flag, default=False, help="Sign as last token.")

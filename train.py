@@ -167,7 +167,7 @@ def get_parser():
                         help="Validation metrics to write to tensorboard")
     parser.add_argument("--validation_metrics_mask", type=str, default="_valid_cfts_xe_loss,valid_cfts_acc,"
                                                                   "valid_cfts_perfect,valid_cfts_correct,"
-                                                                  "valid_cfts_acc_matched_phrases,valid_cfts_acc_good_phrases",
+                                                                  "valid_cfts_acc_matched_phrases,valid_cfts_acc_typematched_phrases",
                         help="Validation metrics to write to tensorboard")
     parser.add_argument("--checkpoint_best_metrics", type=str, default="_valid_cfts_xe_loss",
                         help="save model checkpoints for best values of specified metrics."

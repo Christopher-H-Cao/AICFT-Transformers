@@ -170,7 +170,7 @@ class AllSeqs(Encoder):
         return prefix
 
     def decode(self, lst):
-        if all([str(i).isalpha() for i in lst]): return str(lst)
+        if all([str(i).isalpha() for i in lst]): return ''.join(lst)
         # decode a string of tokens as a Fraction object.
         if len(lst) < 1:
             return None
