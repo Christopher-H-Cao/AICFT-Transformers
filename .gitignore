@@ -137,3 +137,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+sample_data/cft_KM_3M*
