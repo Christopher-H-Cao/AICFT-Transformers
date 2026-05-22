@@ -14,7 +14,6 @@ import src.envs.generators as generators
 import json
 from torch.utils.data import DataLoader
 from src.dataset import EnvDataset
-from collections import Counter
 
 from ..utils import bool_flag, padic_order_equals, biggest_power_of_p
 from ..utils import n_to_s, s_to_n, get_factordict, int_to_nat, nat_to_int
@@ -55,12 +54,11 @@ class CFTEnvironment(object):
         params=self.bonus_args(params)
         self.max_len = params.max_len
         self.operation = params.operation
-        print("operation:",self.operation)
 
         # define some extra accuracy metrics to track here:
         if self.operation == "seq2seq":
             #num output terms correct, num output terms correct type (letter
-            self.hyp_eval_metrics =["matched","typematched","nphrases", "multiset", "lower_int_corr"]
+            self.hyp_eval_metrics =["matched","typematched","nphrases"]
         else:
             self.hyp_eval_metrics =["mag","sign","denom", "numer"]
 
@@ -100,9 +98,7 @@ class CFTEnvironment(object):
 
         # vocabulary. Define signs, letters, etc. here
         self.signs = ['+', '-']
-        self.letters = ['a', 'b', 'c', 'd', 'e', 'f','g','h','s','u','su2','su3','su4','su5','su6','sp4','sp6','sp8','so7','so8','so9','so10','so11','so12','so16','e6','e7','e8','f4','g2',
-                        'minimal','N1minimal','N2minimal','parafermion','Radius1/1','Radius1/2','Radius1/3','Radius1/4','Radius2','Radius2/3',
-                        'Radius3/2','Radius3/4','Radius5', 'Radius5/2','Radius5/3','Radius5/4','Radius7','Radius7/2','Radius7/3']
+        self.letters = ['a', 'b', 'c', 'd', 'e', 'f','g','h']
         self.common_symbols = self.signs + self.letters
         if self.registers > 0:
             self.regwords = [f"R{i}" for i in range(params.registers)]
@@ -114,7 +110,6 @@ class CFTEnvironment(object):
             ))
         self.id2word = {i: s for i, s in enumerate(self.words)}
         self.word2id = {s: i for i, s in self.id2word.items()}
-        print(self.words)
         assert len(self.words) == len(set(self.words))
 
         # number of words / indices
@@ -171,18 +166,9 @@ class CFTEnvironment(object):
         if ("cc" in self.operation or "ADE" in self.operation):
             m = self.output_encoder.decode(lst)
             return str(m)
-        # add new seq2seq line to corporate output type "su2, 9/11"
         elif ("seq2seq" in self.operation):
-            #print("lst=",lst)
             m = [self.output_encoder.decode(elem) for elem in group(lst, ['+','-','a','d','e'])]
-            #print("m=",m)
-            return str(m)
-
-        # below is the original seq2seq line
-        #elif ("seq2seq" in self.operation):
-            #m = [self.output_encoder.decode(elem) for elem in group(lst, ['+','-','a','d','e'])]
-            #return [str(elem) for elem in m]
-
+            return [str(elem) for elem in m]
         elif self.operation == "mask":
             m = self.input_to_infix(lst)
             return str(m)
@@ -263,33 +249,16 @@ class CFTEnvironment(object):
     def check_multi_prediction(self, src, tgt, hyp):
         #tgt and hyp are both lists.
         #Return: are all outputs matched, how many are matched, how many are the correct format, how many total
-        #print("check_multi_prediction, src, tgt, hyp:", src, tgt, hyp)
         if (len(hyp) == 0 or len(tgt) == 0) or (len(hyp) != len(tgt)):
             return -1.0, -1.0, -1.0, -1.0
         if hyp == tgt:
             return 0.0, len(hyp), len(hyp), len(hyp)
 
-        #ms = 0.0 if Counter(tgt) == Counter(hyp) else -1.0
-
-        ms = 0
-        if Counter(tgt) == Counter(hyp):
-            ms += 1
-        #print("multiset=", ms)
-
         num_corr,num_tot,num_typematch=0,0,0
-        lower_int_corr = 0  # New counter for correct predictions with integer value <= 10
-
         for elem_tgt,elem_hyp in zip(tgt,hyp):
             num_tot += 1
-            #print("elem_tgt, elem_hyp",elem_tgt, elem_hyp)
             if elem_tgt==elem_hyp:
                 num_corr += 1
-
-                if (elem_tgt.isdigit() or (elem_tgt.startswith('-') and elem_tgt[1:].isdigit())):
-                    if int(elem_tgt) <= 10:
-                        lower_int_corr += 1
-                        #print(lower_int_corr)
-
             #check: are tgt and hyp both letters (or rationals/numbers?)
             if (elem_tgt.isalpha() and elem_hyp.isalpha()):
                 num_typematch += 1
@@ -299,7 +268,7 @@ class CFTEnvironment(object):
                 num_typematch += 1
             else: continue
 
-        return -1.0, num_corr, num_typematch, num_tot, ms, lower_int_corr
+        return -1.0, num_corr, num_typematch, num_tot
 
     def check_hypothesis(self,eq):
         """
@@ -341,7 +310,6 @@ class CFTEnvironment(object):
         src = [self.id2word[wid] for wid in eq["src"]]
         tgt = [self.id2word[wid] for wid in eq["tgt"]]
         hyp = [self.id2word[wid] for wid in eq["hyp"]]
-        #print("check_seq2seq_hypo, src, tgt, hyp:", src, tgt, hyp)
 
         # update hypothesis
         eq["src"] = self.input_to_infix(src)
@@ -349,22 +317,17 @@ class CFTEnvironment(object):
         eq["hyp"] = self.output_to_infix(hyp)
         eq["hyp_evals"] = {}
 
-        #print("eq[src],eq[tgt],eq[hyp],eq[hyp_eval]", eq["src"], eq["tgt"], eq["hyp"], eq["hyp_evals"])
-
         #do ALL key/val pairs match the tgt completely?
         #~how many~ key/val pairs match the tgt completely?
         #~how many~ key/val pairs are valid?
 
         try:
-            is_fullmatch,num_corr,num_ok,num_phrases, ms, lower_int_corr = self.check_multi_prediction(eq["src"],eq["tgt"],eq["hyp"])
+            is_fullmatch,num_corr,num_ok,num_phrases = self.check_multi_prediction(eq["src"],eq["tgt"],eq["hyp"])
         except ValueError:
             is_fullmatch = -1.0
             num_corr = -1.0
             num_ok = -1.0
             num_phrases = -1.0
-            ms = -1.0
-            lower_int_corr = -1.0
-
 
         #valid hyp = all correct. Universal metric
         eq["is_valid"] = is_fullmatch
@@ -372,8 +335,6 @@ class CFTEnvironment(object):
         eq["hyp_evals"]["matched"] = num_corr
         eq["hyp_evals"]["typematched"] = num_ok
         eq["hyp_evals"]["nphrases"] = num_phrases
-        eq["hyp_evals"]["multiset"] = ms
-        eq["hyp_evals"]["lower_int_corr"] = lower_int_corr
         #print(eq)
         return eq
 

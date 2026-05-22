@@ -196,6 +196,8 @@ class EnvDataset(Dataset):
         else:
             x = [torch.LongTensor([self.env.word2id[w] for w in seq]) for seq in x]
             y = [torch.LongTensor([self.env.word2id[w] for w in seq]) for seq in y]
+            #print("x",x)
+            #print("y",y)
             #use BOS for EOS in default enc-dec
             x, x_len = self.batch_sequences(x, self.env.pad_index, self.env.eos_index, self.env.eos_index)
             y, y_len = self.batch_sequences(y, self.env.pad_index, self.env.eos_index, self.env.eos_index)

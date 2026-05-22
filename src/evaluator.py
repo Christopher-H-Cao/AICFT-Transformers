@@ -7,6 +7,7 @@
 import json
 from logging import getLogger
 from collections import OrderedDict
+from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 import os
 import numpy as np
@@ -81,6 +82,11 @@ class Evaluator(object):
                     self.enc_dec_step(data_type, task, scores)
 
         return scores
+
+    def multiset(pred, tgt):
+        pred_counter = Counter(pred)
+        tgt_counter = Counter(tgt)
+        return pred_counter == tgt_counter
 
     def display_logs(self, logs, offset, eval_path, data_type):  # FC A revoir
         """
@@ -304,10 +310,12 @@ class Evaluator(object):
                 t = torch.zeros_like(pred_mask, device=y.device)
                 top_preds = word_scores.max(1)[1]
                 t[pred_mask] += word_scores.max(1)[1] == y
+                #print("t[pred_mask]:",t[pred_mask])
 
                 if params.architecture == "decoder_only":
                     valid = (t.sum(0) == len2 - len1_).cpu().long()
                 else:
+                    #print("t within else",t)
                     valid = (t.sum(0) == len2 - 1).cpu().long()
                 n_perfect_match += valid.sum().item()
 
@@ -487,6 +495,7 @@ class Evaluator(object):
                     # source / target
                     gen = gens[0]
                     # logger.info(f"gen: {gen}")
+                    # print(gen)
                     src = gen["src"]
                     tgt = gen["tgt"]
                     beam_log[i] = {"src": src, "tgt": tgt, "hyps": []}
@@ -511,6 +520,13 @@ class Evaluator(object):
                         is_valid = gen["is_valid"]
                         is_b_valid = is_valid >= 0.0 and is_valid < env.float_tolerance
 
+                        #def multiset(prediction, target):
+                        #    pred_counter = Counter(prediction)
+                        #    tgt_counter = Counter(target)
+                        #return pred_counter == tgt_counter
+
+                        # frequency_match = multiset(gen["hyp"], tgt)
+
                         #if we haven't found a valid one yet
                         if not valid[i]:
                             if ("mask" in self.params.operation) or ("seq2seq" in self.params.operation):
@@ -526,7 +542,7 @@ class Evaluator(object):
                             #if it's valid now, get the valid metrics. Should rework this
                             if is_valid >= 0.0:
                                 curr_correct = 1
-                                if is_valid < env.float_tolerance:
+                                if is_valid < env.float_tolerance: # and frequency_match: # multiset
                                     curr_valid = 1
                                 for k, tol in enumerate(env.additional_tolerance):
                                     if is_valid < tol:
@@ -537,7 +553,7 @@ class Evaluator(object):
                         for metric in gen["hyp_evals"]:
                             my_beam_out.append(hyp_eval_counts[metric] > 0)
 
-                        my_beam_out.append(is_b_valid)
+                        my_beam_out.append(is_b_valid)  #multiset
                         beam_log[i]["hyps"].append(tuple(my_beam_out))
 
                         if not valid[i]:
@@ -596,9 +612,11 @@ class Evaluator(object):
                 for metric in n_eval_metrics:
                     if "phrases" in metric: continue
                     else:
+                        print(f"{metric}",n_phrases_perfect, n_eval_metrics["nphrases"])
+                        print(f"{metric}",n_phrases_perfect, n_eval_metrics[metric])
                         scores[f"{data_type}_{task}_acc_{metric}_phrases"] = (
                             100.0 * (n_phrases_perfect + n_eval_metrics[metric]) / (n_eval_metrics["nphrases"] + n_phrases_perfect)
-                        )
+                        ) # +1 is actually modified! 
             else:
                 for metric in n_eval_metrics:
                     scores[f"{data_type}_{task}_acc_{metric}"] = (

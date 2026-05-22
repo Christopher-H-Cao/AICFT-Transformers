@@ -131,6 +131,7 @@ class AllSeqs(Encoder):
         #print("Self:",self)
         prefix=[]
         value=str(value)
+        #print(value)
         if value[0] == "-":
             sign = ['-']
             num=value[0:]
@@ -140,16 +141,6 @@ class AllSeqs(Encoder):
         else:
             sign = ['+']
             num=value
-        algb = []
-        #print("num:", num)
-        if "," in num:   # for input like su2,9/11
-            letter = num.split(",")
-            algb=str(letter[0])
-            num=str(letter[1]).strip().strip('"')
-            prefix.append(algb)   # algb are the letters such as 'su2'
-            #prefix.append(",")
-        #print("albg:", algb)
-        #print("prefix:", prefix)
         if "/" not in num:
             numer=abs(int(num))
             if numer == 0:
@@ -169,7 +160,6 @@ class AllSeqs(Encoder):
             numer=int(numer/my_gcd)
             denom=int(denom/my_gcd)
 
-            #print("prefixalgb:",prefix)
             numpref=[]
             while int(numer) > 0:
                 numpref.append(str(numer % self.base))
@@ -228,9 +218,6 @@ class AllSeqs(Encoder):
             temp = lst[:-1].index("/")
             numer = lst[:-1][:temp]
             denom = lst[:-1][temp+1:]
-            #print("(in_sign_last)temp,numer,denom:", temp, numer, denom)
-            # consider letters:
-            # algb = lst[:-1].index( algbera library (su2, e8, su3...) )
             for x in numer:
                 if not (x.isdigit()):
                     return None
@@ -248,63 +235,21 @@ class AllSeqs(Encoder):
             return 0
         numres = 0
         denomres = 0
-
-        library = ['su2','su3','su4','su5','su6','sp4','sp6','sp8','so7','so8','so9','so10','so11','so12','so16','e6','e7','e8','f4','g2','minimal','N1minimal','N2minimal','parafermion',
-                   'Radius1/1','Radius1/2','Radius1/3','Radius1/4','Radius2','Radius2/3','Radius3/2','Radius3/4','Radius5', 'Radius5/2',
-                   'Radius5/3','Radius5/4','Radius7','Radius7/2','Radius7/3']
-        position_1 = None
-        for item in library:
-            try:
-                idx_1 = lst.index(item)
-            except ValueError:
-                continue
-            position_1 = idx_1
-            #print("position_1:", position_1)
-        if position_1 is None:
-            print(f"No match found at epoch, lst:{lst}")
-
-        #print(lst)
-        letter = lst[1:][:position_1][0]
-        fraction = lst[1:][position_1:]
-
-        try:
-            temp = fraction[0:].index("/")
-            numer = fraction[0:][:temp]
-            denom = fraction[0:][temp+1:]
-        except ValueError:
-            print(f"Unexpected format in fraction at epoch: {fraction}")
-            return None
-
-        #temp = fraction[0:].index("/")
-        #numer = fraction[0:][:temp]
-        #denom = fraction[0:][temp+1:]
-
-        # the original line is below:
-        #temp = lst[1:].index("/")
-        #numer = lst[1:][:temp]
-        #denom = lst[1:][temp+1:]
-
-        # skip the whole decoding if NonType shows up
-        if numer is None or denom is None:
-            return None
-
-        #print("letter, fraction, temp, numer, denom:", letter, fraction, temp, numer, denom)
+        temp = lst[1:].index("/")
+        numer = lst[1:][:temp]
+        denom = lst[1:][temp+1:]
         for x in numer:
             if not (x.isdigit()):
                 return None
             numres = numres * self.base + int(x)
-            #print("numres, self.base, x, int(x):", numres, self.base, x, int(x))
         for x in denom:
             if not (x.isdigit()):
                 return None
             denomres = denomres * self.base + int(x)
-            #print("denomres, self.base, x, int(x):", denomres, self.base, x, int(x))
         if denomres == 0:
             numres=0
             denomres=1
-        frac = Fraction(numres, denomres)
-        res = [letter, frac]
-        #print("letter, frac, res:", letter, frac, res)
+        res = Fraction(numres, denomres)
         return -res if lst[0] == '-' else res
 
 class FastRational(Encoder):
