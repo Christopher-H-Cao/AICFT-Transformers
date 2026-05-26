@@ -48,29 +48,95 @@ All package dependencies are listed in requirements.txt. The relatively-small do
 Metrics are logged on wandb- create a weights and biases account to follow trainings as they happen. If no wandb account is found, logging will happen on tensorboard instead.
 
 
-#to run on CHTC:
-To run this on CHTC on a new dataset:
+## Running on CHTC
 
-First, process the data into the desired input-output format using "make_cft_data_from_csv.py".
-Shuffle the output file and split it into a file.train and a file.valid (and possibly a file.test as well).
-For early experiments, I recommend a 90%-10% train/valid split with no test.
-Put these files into a directory. I recommend keeping this outside this repo, in case files get large:
-accidentally checking large files into git can cause major problems!
+### 1. Environment setup
 
+Activate conda on the CHTC node:
+```bash
+eval "$(/home/hcao39/anaconda3/bin/conda shell.bash hook)"
+conda activate py3
+```
 
-To run, make a tarball containing the repository folder and your data folder:
-`tar --exclude-vcs -czvf runcft_package.tar ChromoBoot_CFT {YOUR_DATA_FOLDER}`
-IMPORTANT: If you've run the model locally, make sure to delete the "wandb" and "checkpoint" directories before doing this!
+### 2. Stage data (large files)
 
-Copy the tarball to the transfer node on CHTC. I use 'staging' for this and recommend you do as well.
+Create a tarball of the repository (excluding git history) and copy it to CHTC staging:
+```bash
+tar --exclude-vcs -czvf runjob_package_cft.tar Chromoboot_CFT
+scp runjob_package_cft.tar hcao39@transfer.chtc.wisc.edu:/staging/hcao39/
+```
 
-Edit the .sub and .sh scripts as needed. Add your WANDB_API key.
-Make sure that the .sh script unpacks the tarball, cds into the ChromoBoot_CFT directory, copies the data into it if it is not there already,
-and that the train.py command points to the place the data is located in the ChromoBoot_CFT directory.
+To browse staging:
+```bash
+ssh hcao39@transfer.chtc.wisc.edu
+cd /staging/hcao39
+ls
+```
 
-Copy the .sub and .sh scripts to the submit node on CHTC.
+### 3. Prepare and submit job
 
-Edit them as needed- make sure the .sub script correctly points to the .sh one.
-do: `condor_submit run_training_cfts.sub`
+Upload the `.sh` and `.sub` scripts to the submit node:
+```bash
+scp run_cft.sh run_cft.sub hcao39@ap2002.chtc.wisc.edu:/home/hcao39/
+ssh hcao39@ap2002.chtc.wisc.edu
+condor_submit run_cft.sub
+```
 
-Wait
+Monitor and manage jobs:
+```bash
+condor_q           # check job status
+condor_rm JOBID    # remove a job
+```
+
+### 4. Training commands
+
+**Standard KM dataset (c < 50):**
+```bash
+python train.py \
+  --reload_data cfts,./sample_data/cft_KM_3M_l2-5_cleq50_out.csv.train,./sample_data/cft_KM_3M_l2-5_cleq50_out.csv.valid,./sample_data/cft_KM_3M_l2-5_cleq50_out.csv.valid \
+  --max_epoch 300 --n_enc_layers 2 --n_dec_layers 2 \
+  --n_enc_heads 8 --n_dec_heads 8 \
+  --num_workers 1 --eval_verbose 1 \
+  --batch_size 512 --batch_size_eval 10 \
+  --enc_emb_dim 256 --dec_emb_dim 256 \
+  --amp 1 --fp16 True
+```
+
+**With priming data (e.g. adding coset or higher-c examples):**
+```bash
+python3 combine.py cft_KM+coset_l2-5_priming30.csv cft_KM_3M_l2-5_cleq50_out.csv.train cft_KM+coset_l2-5_priming30_train.csv
+# then pass the combined file to --reload_data
+```
+
+### 5. Checking results
+
+```bash
+# Check accuracy in a single eval file
+grep "Equation" eval.valid.cfts.49 | grep "\(1/1\)" | wc -l
+
+# Find the best epoch across all eval files
+for n in {1..100}; do
+  count=$(grep "Equation" "eval.valid.cfts.$n" 2>/dev/null | grep "\(1/1\)" | wc -l)
+  echo "$n $count"
+done | sort -k2 -rn | head -5
+
+# Check checkpoint directory
+ls -lrth ./checkpoint/hcao39/dumped/debug
+```
+
+### 6. Data pipeline reference
+
+Move processed data into the repo:
+```bash
+mv your_dataset.csv ~/Chromoboot_CFT/sample_data/
+```
+
+Full preprocessing sequence:
+```bash
+python make_cft_data_from_csv.py \
+  --path_to_csv sample_data/your_dataset \
+  --path_to_outfile sample_data/your_dataset_out \
+  --num_rows 1000 --num_cols 10 --target_variable 'cc'
+shuf sample_data/your_dataset_out.csv --output sample_data/your_dataset_out.csv
+python3 split_data.py --data_path sample_data/your_dataset_out --valid_set_size 10000 --no_test True
+```
