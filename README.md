@@ -36,16 +36,16 @@ Metrics are logged on wandb- create a weights and biases account to follow train
 
 ### 1. Environment setup
 
-Activate conda on the CHTC node:
+Activate conda:
 ```bash
 conda activate envname
 ```
 
 ### 2. Stage data (large files)
 
-Create a tarball of the repository (excluding git history) and copy it to CHTC staging:
+Create a tarball of the repository (excluding git history) and copy it to cluster:
 ```bash
-tar --exclude-vcs -czvf runjob_package_cft.tar Chromoboot_CFT
+tar --exclude-vcs -czvf runjob_package_cft.tar AICFT-Transformers
 scp runjob_package_cft.tar clusterusername/folder
 ```
 
@@ -58,6 +58,7 @@ python train.py --reload_data cfts,./sample_data/cft_KM_l2-5_c50.csv.train,./sam
 ```
 
 **With priming data (e.g. adding coset or higher-c examples):**
+Add these lines before the training commands
 ```bash
 python3 combine.py cft_KM+coset_l2-5_primingxxx.csv cft_KM_l2-5_c50.csv.train cft_KM+coset_l2-5_primingxxx_train.csv
 # then pass the combined file to --reload_data
