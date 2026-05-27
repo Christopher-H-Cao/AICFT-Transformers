@@ -41,7 +41,7 @@ All package dependencies are listed in requirements.txt. The relatively-small do
 Metrics are logged on wandb- create a weights and biases account to follow trainings as they happen. If no wandb account is found, logging will happen on tensorboard instead.
 
 
-## Running on Cluster
+## Running on cluster
 
 ### 1. Environment setup
 
