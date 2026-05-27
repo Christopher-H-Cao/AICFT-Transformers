@@ -26,7 +26,7 @@ Training Example:
 python train.py --reload_data cfts,./sample_data/cft_KM_l2-5_c50.csv.train,./sample_data/cft_KM_l2-5_c50.csv.valid,./sample_data/cft_KM_l2-5_c50.csv.valid --max_epoch 100 --n_enc_layers 2 --n_dec_layers 2 --num_workers 1 --eval_verbose 1 --batch_size 128 --batch_size_eval 10 --enc_emb_dim 256 --dec_emb_dim 256 --amp 1 --fp16 True 
 
 # Docker
-All package dependencies are listed in requirements.txt. The relatively-small dockerfile provided can be used to run the repo on a setup such as UW's CHTC (you will need to copy the code and data in for now).In general, though, this is not needed for local runs!
+All package dependencies are listed in requirements.txt. The relatively-small dockerfile provided can be used to run the repo on a setup such as UW's CHTC.
 
 # Tensorboard
 Metrics are logged on wandb- create a weights and biases account to follow trainings as they happen. If no wandb account is found, logging will happen on tensorboard instead.
