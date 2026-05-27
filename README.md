@@ -12,8 +12,6 @@ to install any required packages that you may not have. Make sure you are using 
 
 `shuf {OUTPUT FILE} --output {OUTPUT FILE}`
 
-Shuffle the file. `make_cft_data_from_csv.py` outputs this line for you to copy). Note that for macs with GNU installed but not by default, need to use `gshuf` instead of `shuf`. 
-
 *split_data.py:*
 
  `python split_data.py  --data_path output_file.prefix --valid_set_size 1000 --no_test True`
