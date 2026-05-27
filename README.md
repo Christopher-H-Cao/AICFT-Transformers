@@ -6,7 +6,16 @@ conda env create --file conda_reqs.txt
 
 to install any required packages that you may not have. Make sure you are using python 3.10 (my version is 3.10.10) as pytorch does not yet support python 3.11!
 
+
 ## Dataset preprocessing
+
+Please note that the sample_data folder doesn't have the actual datasets used for training. All train datasets can be found in Zenodo as follows:
+https://doi.org/10.5281/zenodo.20348604
+
+cft_KM_3M_l2-5_cleq50.csv contains tensor product CFTs built from Kac-Moody algebras (WZW realizations) with central charge smaller than 50. 
+cft_KM_3M_l2-5_c50-100.csv contains tensor product CFTs built from Kac-Moody algebras (WZW realizations) with central charge between 50 and 100.
+
+Feel free to download those data and include them in the sample_data folder. Here, I'll use the exisiting files in the sample_data folder as an example in the following tutorial.
 
 *shuffling and concatenating:*
 
