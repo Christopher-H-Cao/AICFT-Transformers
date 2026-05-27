@@ -6,15 +6,7 @@ conda env create --file conda_reqs.txt
 
 to install any required packages that you may not have. Make sure you are using python 3.10 (my version is 3.10.10) as pytorch does not yet support python 3.11!
 
-## Dataset building
-
-*make_cft_data_from_csv.py:* 
-
-`python make_cft_data_from_csv.py --path_to_csv {YOUR CSV} --path_to_outfile {OUTPUT FILE} --num_rows {rows} --num_cols {columns} --target_variable {'cc' or 'ade'}`
-
-This code processes a csv of CFTs, with the CC first. You can truncate it to only n terms of each cft with 'num_cols', or take only the first n cfts with 'n_rows'.
-This script is totally agnostic to the format of input data (decimal or rational).
-You can also modify this script to calculate A,D,E or CC using k (should just be row number in CSV).
+## Dataset preprocessing
 
 *shuffling and concatenating:*
 
